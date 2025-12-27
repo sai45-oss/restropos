@@ -10,6 +10,11 @@ const mongoose = require("mongoose");
 const addMenuItem = async (req, res, next) => {
   try {
     const { name, category, price } = req.body;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
 
     if (!name || !category || !price) {
       return next(
@@ -21,17 +26,17 @@ const addMenuItem = async (req, res, next) => {
       return next(createHttpError(400, "Invalid category id"));
     }
 
-    const categoryExists = await Category.findById(category);
+    const categoryExists = await Category.findOne({ _id: category, tenantId });
     if (!categoryExists) {
       return next(createHttpError(404, "Category not found"));
     }
 
-    const isMenuItemPresent = await Menu.findOne({ name, category });
+    const isMenuItemPresent = await Menu.findOne({ name, category, tenantId });
     if (isMenuItemPresent) {
       return next(createHttpError(400, "Menu item already exists!"));
     }
 
-    const newMenuItem = new Menu(req.body);
+    const newMenuItem = new Menu({ ...req.body, tenantId });
     await newMenuItem.save();
     await newMenuItem.populate("category");
 
@@ -52,7 +57,13 @@ const addMenuItem = async (req, res, next) => {
 const getMenuItems = async (req, res, next) => {
   try {
     const { category, available } = req.query;
-    let query = {};
+    const tenantId = req.user?.tenantId || req.tenantId;
+    
+    if (!tenantId) {
+      return next(createHttpError(400, "Tenant context is required"));
+    }
+
+    let query = { tenantId };
 
     if (category) {
       if (!mongoose.Types.ObjectId.isValid(category)) {
@@ -83,12 +94,17 @@ const getMenuItems = async (req, res, next) => {
 const getMenuItemById = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const tenantId = req.user?.tenantId || req.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "Tenant context is required"));
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(createHttpError(400, "Invalid menu id"));
     }
 
-    const menuItem = await Menu.findById(id).populate("category");
+    const menuItem = await Menu.findOne({ _id: id, tenantId }).populate("category");
 
     if (!menuItem) {
       return next(createHttpError(404, "Menu item not found"));
@@ -110,15 +126,24 @@ const getMenuItemById = async (req, res, next) => {
 const updateMenuItem = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(createHttpError(400, "Invalid menu id"));
     }
 
-    const updatedMenu = await Menu.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    }).populate("category");
+    const updatedMenu = await Menu.findOneAndUpdate(
+      { _id: id, tenantId },
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).populate("category");
 
     if (!updatedMenu) {
       return next(createHttpError(404, "Menu item not found"));
@@ -141,12 +166,17 @@ const updateMenuItem = async (req, res, next) => {
 const deleteMenuItem = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(createHttpError(400, "Invalid menu id"));
     }
 
-    const deletedMenu = await Menu.findByIdAndDelete(id);
+    const deletedMenu = await Menu.findOneAndDelete({ _id: id, tenantId });
 
     if (!deletedMenu) {
       return next(createHttpError(404, "Menu item not found"));
@@ -167,12 +197,19 @@ const deleteMenuItem = async (req, res, next) => {
  */
 const getMenuByCategory = async (req, res, next) => {
   try {
-    const categories = await Category.find();
+    const tenantId = req.user?.tenantId || req.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "Tenant context is required"));
+    }
+
+    const categories = await Category.find({ tenantId });
     const menuByCategory = {};
 
     for (const category of categories) {
       const items = await Menu.find({
         category: category._id,
+        tenantId,
         available: true,
       }).populate("category");
 

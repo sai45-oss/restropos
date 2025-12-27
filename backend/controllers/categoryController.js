@@ -6,10 +6,17 @@ const mongoose = require("mongoose");
 const createCategory = async (req, res, next) => {
   try {
     const { name, description } = req.body;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
+
     if (!name) {
       return next(createHttpError(400, "Category name is required"));
     }
-    const category = new Category({ name, description });
+
+    const category = new Category({ name, description, tenantId });
     await category.save();
     res.status(201).json({ success: true, data: category });
   } catch (error) {
@@ -20,7 +27,13 @@ const createCategory = async (req, res, next) => {
 // Get all categories
 const getAllCategories = async (req, res, next) => {
   try {
-    const categories = await Category.find();
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
+
+    const categories = await Category.find({ tenantId });
     res.status(200).json({ success: true, data: categories });
   } catch (error) {
     next(error);
@@ -32,17 +45,26 @@ const updateCategory = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, description } = req.body;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(createHttpError(400, "Invalid category ID"));
     }
-    const updatedCategory = await Category.findByIdAndUpdate(
-      id,
+
+    const updatedCategory = await Category.findOneAndUpdate(
+      { _id: id, tenantId },
       { name, description },
       { new: true }
     );
+
     if (!updatedCategory) {
       return next(createHttpError(404, "Category not found"));
     }
+
     res.status(200).json({ success: true, data: updatedCategory });
   } catch (error) {
     next(error);
@@ -53,13 +75,22 @@ const updateCategory = async (req, res, next) => {
 const deleteCategory = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(createHttpError(400, "Invalid category ID"));
     }
-    const deletedCategory = await Category.findByIdAndDelete(id);
+
+    const deletedCategory = await Category.findOneAndDelete({ _id: id, tenantId });
+
     if (!deletedCategory) {
       return next(createHttpError(404, "Category not found"));
     }
+
     res.status(200).json({ success: true, message: "Category deleted" });
   } catch (error) {
     next(error);

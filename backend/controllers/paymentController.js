@@ -1,6 +1,7 @@
 const Razorpay = require("razorpay");
 const config = require("../config/config");
 const crypto = require("crypto");
+const createHttpError = require("http-errors");
 const Payment = require("../models/paymentModel");
 
 const createOrder = async (req, res, next) => {
@@ -11,10 +12,19 @@ const createOrder = async (req, res, next) => {
 
   try {
     const { amount } = req.body;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
+
     const options = {
       amount: amount * 100, // Amount in paisa (1 INR = 100 paisa)
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
+      notes: {
+        tenantId: tenantId.toString()
+      }
     };
 
     const order = await razorpay.orders.create(options);
@@ -67,6 +77,13 @@ const webHookVerification = async (req, res, next) => {
         const payment = req.body.payload.payment.entity;
         console.log(`💰 Payment Captured: ${payment.amount / 100} INR`);
 
+        // Extract tenantId from notes if available
+        const tenantId = payment.notes?.tenantId;
+        
+        if (!tenantId) {
+          console.warn("⚠️ Payment received without tenantId:", payment.id);
+        }
+
         // Add Payment Details in Database
         const newPayment = new Payment({
           paymentId: payment.id,
@@ -77,6 +94,7 @@ const webHookVerification = async (req, res, next) => {
           method: payment.method,
           email: payment.email,
           contact: payment.contact,
+          tenantId: tenantId || null,
           createdAt: new Date(payment.created_at * 1000) 
         })
 

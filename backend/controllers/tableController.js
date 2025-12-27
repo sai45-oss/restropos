@@ -5,18 +5,25 @@ const mongoose = require("mongoose")
 const addTable = async (req, res, next) => {
   try {
     const { tableNo, seats } = req.body;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
+
     if (!tableNo) {
       const error = createHttpError(400, "Please provide table No!");
       return next(error);
     }
-    const isTablePresent = await Table.findOne({ tableNo });
+
+    const isTablePresent = await Table.findOne({ tableNo, tenantId });
 
     if (isTablePresent) {
       const error = createHttpError(400, "Table already exist!");
       return next(error);
     }
 
-    const newTable = new Table({ tableNo, seats });
+    const newTable = new Table({ tableNo, seats, tenantId });
     await newTable.save();
     res
       .status(201)
@@ -28,7 +35,13 @@ const addTable = async (req, res, next) => {
 
 const getTables = async (req, res, next) => {
   try {
-    const tables = await Table.find().populate({
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
+
+    const tables = await Table.find({ tenantId }).populate({
       path: "currentOrder",
       select: "customerDetails"
     });
@@ -41,8 +54,12 @@ const getTables = async (req, res, next) => {
 const updateTable = async (req, res, next) => {
   try {
     const { tableNo, seats, status, orderId } = req.body;
-
     const { id } = req.params;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       const error = createHttpError(404, "Invalid id!");
@@ -57,11 +74,15 @@ const updateTable = async (req, res, next) => {
     if (orderId === null) updateData.currentOrder = null;
 
 
-    const table = await Table.findByIdAndUpdate(id, updateData, { new: true });
+    const table = await Table.findOneAndUpdate(
+      { _id: id, tenantId },
+      updateData,
+      { new: true }
+    );
 
     if (!table) {
       const error = createHttpError(404, "Table not found!");
-      return error;
+      return next(error);
     }
 
     res
@@ -75,17 +96,22 @@ const updateTable = async (req, res, next) => {
 const deleteTable = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       const error = createHttpError(404, "Invalid id!");
       return next(error);
     }
 
-    const table = await Table.findByIdAndDelete(id);
+    const table = await Table.findOneAndDelete({ _id: id, tenantId });
 
     if (!table) {
       const error = createHttpError(404, "Table not found!");
-      return error;
+      return next(error);
     }
 
     res
