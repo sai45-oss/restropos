@@ -177,6 +177,26 @@ Routes are protected with:
 ✅ Category names are unique per tenant (not globally)
 ✅ Email addresses can exist across tenants
 
+### Recommended Production Security Enhancements
+⚠️ **Rate Limiting**: Add rate limiting to API endpoints to prevent abuse
+⚠️ **Request Validation**: Add input sanitization and validation middleware
+⚠️ **CORS Configuration**: Restrict CORS to specific production domains
+⚠️ **HTTPS Only**: Enforce HTTPS in production
+⚠️ **Security Headers**: Add helmet.js for security headers
+
+Example rate limiting setup:
+```javascript
+const rateLimit = require('express-rate-limit');
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP'
+});
+
+app.use('/api/', limiter);
+```
+
 ## Subscription & Billing
 
 ### Stripe Integration (Optional)

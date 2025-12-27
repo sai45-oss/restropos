@@ -128,6 +128,13 @@ Enhanced to support both authenticated and public access:
 ✅ **Tenant Validation**: Users validated against tenant during login
 ✅ **Protected Operations**: CRUD operations scoped to user's tenant
 
+### Recommended for Production
+⚠️ **Rate Limiting**: Add express-rate-limit to prevent API abuse
+⚠️ **Input Validation**: Add comprehensive request validation
+⚠️ **Security Headers**: Use helmet.js for security headers
+⚠️ **HTTPS**: Enforce HTTPS in production
+⚠️ **Monitoring**: Set up security monitoring and alerting
+
 ## Backward Compatibility
 
 ⚠️ **Breaking Changes**: Existing data requires migration
