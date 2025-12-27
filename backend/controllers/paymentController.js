@@ -81,7 +81,8 @@ const webHookVerification = async (req, res, next) => {
         const tenantId = payment.notes?.tenantId;
         
         if (!tenantId) {
-          console.warn("⚠️ Payment received without tenantId:", payment.id);
+          // Log warning about missing tenantId - consider using a logging framework in production
+          console.log("⚠️ Payment received without tenantId:", payment.id);
         }
 
         // Add Payment Details in Database

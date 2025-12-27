@@ -264,5 +264,20 @@ async function runTests() {
 }
 
 // Run the tests
-console.log('⏳ Starting tests in 2 seconds...\n');
-setTimeout(runTests, 2000);
+console.log('⏳ Checking server availability...\n');
+
+// Simple health check before running tests
+function checkServer() {
+    return makeRequest('GET', '/')
+        .then(() => {
+            console.log('✅ Server is available\n');
+            return true;
+        })
+        .catch(() => {
+            console.log('❌ Server is not available at', BASE_URL);
+            console.log('💡 Please start the backend server first: npm run dev\n');
+            process.exit(1);
+        });
+}
+
+checkServer().then(runTests);
