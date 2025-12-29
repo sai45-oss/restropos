@@ -82,7 +82,7 @@ const getOrders = async (req, res, next) => {
     const tenantId = req.user.tenantId;
 
     if (!tenantId) {
-      return next(createHttpError(400, "User is not associated with a tenant"));
+      return next(createHttpError(400, "User is not associated with a tenant. Please ensure you're logged in with a restaurant account, not a super admin account. If you're a restaurant admin, your account may need to be recreated."));
     }
 
     const orders = await Order.find({ tenantId }).populate("table");
