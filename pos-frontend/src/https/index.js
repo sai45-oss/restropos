@@ -51,3 +51,16 @@ export const addOrder = (data) => axiosWrapper.post("/api/order/", data);
 export const getOrders = () => axiosWrapper.get("/api/order");
 export const updateOrderStatus = ({ orderId, orderStatus }) =>
   axiosWrapper.put(`/api/order/${orderId}`, { orderStatus });
+
+// Tenant Endpoints
+export const createTenant = (data) => axiosWrapper.post("/api/tenant", data);
+
+// Super Admin Endpoints
+export const getSuperAdminStats = () => axiosWrapper.get("/api/superadmin/dashboard/stats");
+export const getAllTenants = (params) => axiosWrapper.get("/api/superadmin/tenants", { params });
+export const getTenantById = (id) => axiosWrapper.get(`/api/superadmin/tenants/${id}`);
+export const updateTenant = ({ tenantId, ...data }) =>
+  axiosWrapper.put(`/api/superadmin/tenants/${tenantId}`, data);
+export const deleteTenant = (id) => axiosWrapper.delete(`/api/superadmin/tenants/${id}`);
+export const getAllUsersAdmin = (params) => axiosWrapper.get("/api/superadmin/users", { params });
+

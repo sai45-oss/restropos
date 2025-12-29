@@ -29,9 +29,15 @@ const Login = () => {
       onSuccess: (res) => {
           const { data } = res;
           console.log(data);
-          const { _id, name, email, phone, role } = data.data;
-          dispatch(setUser({ _id, name, email, phone, role }));
-          navigate("/");
+          const { _id, name, email, phone, role, tenantId } = data.data;
+          dispatch(setUser({ _id, name, email, phone, role, tenantId }));
+          
+          // Navigate based on role
+          if (role === 'superadmin') {
+            navigate("/superadmin");
+          } else {
+            navigate("/");
+          }
       },
       onError: (error) => {
         const { response } = error;

@@ -5,3 +5,5 @@ export { default as Tables } from "./Tables";
 export { default as Menu } from "./Menu";
 export { default as Dashboard } from "./Dashboard";
 export { default as Users } from "./Users";
+export { default as SuperAdminDashboard } from "./SuperAdminDashboard";
+export { default as TenantOnboarding } from "./TenantOnboarding";

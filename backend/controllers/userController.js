@@ -88,8 +88,9 @@ const login = async (req, res, next) => {
             secure: true
         })
 
+        const { _id, name, email, phone, role, tenantId } = isUserPresent;
         res.status(200).json({success: true, message: "User login successfully!", 
-            data: isUserPresent
+            data: { _id, name, email, phone, role, tenantId }
         });
     } catch (error) {
         next(error);

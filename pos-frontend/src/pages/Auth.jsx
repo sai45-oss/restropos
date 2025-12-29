@@ -42,6 +42,19 @@ const Auth = () => {
         {/* Components */}  
         <Login />
 
+        {/* Sign Up Link */}
+        <div className="mt-8 text-center">
+          <p className="text-gray-400">
+            Don't have a restaurant account?{" "}
+            <button
+              onClick={() => window.location.href = '/signup'}
+              className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors"
+            >
+              Create Restaurant
+            </button>
+          </p>
+        </div>
+
       </div>
     </div>
   );
