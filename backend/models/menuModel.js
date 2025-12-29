@@ -44,8 +44,18 @@ const menuSchema = new mongoose.Schema(
         type: String,
       },
     ],
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tenant",
+      required: true,
+      index: true,
+    },
   },
   { timestamps: true }
 );
+
+// Compound index for tenant-scoped queries
+menuSchema.index({ tenantId: 1, category: 1 });
+menuSchema.index({ tenantId: 1, available: 1 });
 
 module.exports = mongoose.model("Menu", menuSchema);

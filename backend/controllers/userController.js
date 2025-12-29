@@ -54,7 +54,8 @@ const login = async (req, res, next) => {
             return next(error);
         }
 
-        if (tenantId || tenantSlug) {
+        // Super admins don't need tenant validation
+        if (isUserPresent.role !== 'superadmin' && (tenantId || tenantSlug)) {
             let tenant = null;
             if (tenantId) tenant = await Tenant.findById(tenantId).lean();
             if (!tenant && tenantSlug) tenant = await Tenant.findOne({ slug: tenantSlug }).lean();
@@ -88,8 +89,9 @@ const login = async (req, res, next) => {
             secure: true
         })
 
+        const { _id, name, email: userEmail, phone, role, tenantId: userTenantId } = isUserPresent;
         res.status(200).json({success: true, message: "User login successfully!", 
-            data: isUserPresent
+            data: { _id, name, email: userEmail, phone, role, tenantId: userTenantId }
         });
     } catch (error) {
         next(error);

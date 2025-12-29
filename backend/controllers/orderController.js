@@ -11,20 +11,27 @@ const addOrder = async (req, res, next) => {
       return next(createHttpError(400, "Request body is empty"));
     }
 
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
+
     if (req.body.table && !mongoose.Types.ObjectId.isValid(req.body.table)) {
       return next(createHttpError(400, "Invalid table id"));
     }
 
     const order = new Order({
       ...req.body,
+      tenantId,
       orderDate: new Date(),
     });
 
     await order.save();
 
     if (order.table) {
-      await Table.findByIdAndUpdate(
-        order.table,
+      await Table.findOneAndUpdate(
+        { _id: order.table, tenantId },
         {
           status: "Occupied",
           currentOrder: order._id,
@@ -47,13 +54,18 @@ const addOrder = async (req, res, next) => {
 const getOrderById = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       const error = createHttpError(404, "Invalid id!");
       return next(error);
     }
 
-    const order = await Order.findById(id);
+    const order = await Order.findOne({ _id: id, tenantId });
     if (!order) {
       const error = createHttpError(404, "Order not found!");
       return next(error);
@@ -67,7 +79,13 @@ const getOrderById = async (req, res, next) => {
 
 const getOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find().populate("table");
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant. Please ensure you're logged in with a restaurant account, not a super admin account. If you're a restaurant admin, your account may need to be recreated."));
+    }
+
+    const orders = await Order.find({ tenantId }).populate("table");
     res.status(200).json({ data: orders });
   } catch (error) {
     next(error);
@@ -78,14 +96,19 @@ const updateOrder = async (req, res, next) => {
   try {
     const { orderStatus } = req.body;
     const { id } = req.params;
+    const tenantId = req.user.tenantId;
+
+    if (!tenantId) {
+      return next(createHttpError(400, "User is not associated with a tenant"));
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       const error = createHttpError(404, "Invalid id!");
       return next(error);
     }
 
-    const order = await Order.findByIdAndUpdate(
-      id,
+    const order = await Order.findOneAndUpdate(
+      { _id: id, tenantId },
       { orderStatus },
       { new: true }
     );
@@ -96,10 +119,13 @@ const updateOrder = async (req, res, next) => {
     }
 
     if (orderStatus === "Completed" && order.table) {
-      await Table.findByIdAndUpdate(order.table, {
-        status: "Available",
-        currentOrder: null,
-      });
+      await Table.findOneAndUpdate(
+        { _id: order.table, tenantId },
+        {
+          status: "Available",
+          currentOrder: null,
+        }
+      );
     }
 
     res

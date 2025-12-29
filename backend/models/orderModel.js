@@ -43,8 +43,19 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Table",
     },
+
+    tenantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tenant",
+      required: true,
+      index: true,
+    },
   },
   { timestamps: true }
 );
+
+// Compound indexes for tenant-scoped queries
+orderSchema.index({ tenantId: 1, orderStatus: 1 });
+orderSchema.index({ tenantId: 1, orderDate: -1 });
 
 module.exports = mongoose.model("Order", orderSchema);

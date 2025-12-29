@@ -73,6 +73,7 @@ app.use("/api/menu", require("./routes/menuRoute"));
 app.use("/api/payment", require("./routes/paymentRoute"));
 app.use("/api/category", require("./routes/categoryRoute"));
 app.use('/api/tenant', require('./routes/tenantRoute'));
+app.use('/api/superadmin', require('./routes/superAdminRoute'));
 
 //global error
 app.use(globalerrorhandle)

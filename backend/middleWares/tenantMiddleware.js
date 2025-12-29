@@ -3,6 +3,17 @@ const mongoose = require('mongoose');
 
 module.exports = async function tenantResolver(req, res, next) {
     try {
+        // First check if user is authenticated and has tenantId
+        if (req.user && req.user.tenantId) {
+            const tenant = await Tenant.findById(req.user.tenantId).lean();
+            if (tenant) {
+                req.tenant = tenant;
+                req.tenantId = tenant._id;
+                return next();
+            }
+        }
+
+        // Otherwise look for tenant identifier in params/headers/query
         const tid = req.params.tenantId || req.headers['x-tenant-id'] || req.query.tenantId;
         if (!tid) {
             return res.status(400).json({ message: 'Tenant identifier missing in path/header/query' });
