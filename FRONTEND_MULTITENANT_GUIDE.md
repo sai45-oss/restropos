@@ -65,7 +65,26 @@ The frontend will be available at `http://localhost:5173`
 
 ### Creating a Super Admin User
 
-Since super admin users can't be created through the normal flow, you need to create one directly in MongoDB:
+Since super admin users can't be created through the normal flow, you need to create one using the provided script:
+
+**Using the Helper Script (Recommended):**
+
+```bash
+cd backend
+node create-superadmin.js
+```
+
+This will create a super admin with:
+- **Email**: `superadmin@restropos.com`
+- **Password**: `admin123`
+- **Role**: `superadmin`
+
+**Important Notes:**
+- Super admins do NOT have a `tenantId` (they manage all tenants)
+- When logging in as super admin, do NOT provide `tenantId` or `tenantSlug`
+- Change the default password after first login
+
+**Manual Creation via MongoDB (Alternative):**
 
 ```javascript
 // Connect to MongoDB
